@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Master - أكاديمية الشطرنج</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --gold: #e94560;
+            --light: #f1f1f1;
+            --board-light: #f0d9b5;
+            --board-dark: #b58863;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            min-height: 100vh;
+            color: var(--light);
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 3rem;
+            border-bottom: 3px solid var(--gold);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(233, 69, 96, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .logo-container:hover {
+            transform: scale(1.05);
+        }
+
+        .logo-icon {
+            font-size: 4rem;
+            filter: drop-shadow(0 0 15px rgba(233, 69, 96, 0.6));
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { filter: drop-shadow(0 0 10px rgba(233, 69, 96, 0.5)); }
+            to { filter: drop-shadow(0 0 20px rgba(233, 69, 96, 0.8)); }
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-family: 'Cairo', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--gold) 0%, #ff6b6b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .subtitle {
+            color: #ddd;
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            margin-top: 0.3rem;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gold);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .settings-btn, .logout-btn {
+            background: rgba(233, 69, 96, 0.2);
+            border: 2px solid var(--gold);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        .settings-btn:hover, .logout-btn:hover {
+            background: var(--gold);
+        }
+
+        .main-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            padding: 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid rgba(233, 69, 96, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(233, 69, 96, 0.1) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
+        .menu-card:hover::before {
+            opacity: 1;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--gold);
+            box-shadow: 0 20px 40px rgba(233, 69, 96, 0.4);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .card-title {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--gold);
+        }
+
+        .card-desc {
+            color: #ccc;
+            line-height: 1.6;
+        }
+
+        .login-container {
+            max-width: 450px;
+            margin: 5rem auto;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 3rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .login-title {
+            font-family: 'Cairo', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--gold);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #ddd;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 2px solid rgba(233, 69, 96, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            font-size: 1rem;
+            font-family: 'Tajawal', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--gold);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-family: 'Cairo', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+
+        .login-btn:hover {
+            background: #ff6b6b;
+            transform: translateY(-2px);
+        }
+
+        .toggle-auth {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #ccc;
+        }
+
+        .toggle-auth a {
+            color: var(--gold);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .back-btn {
+            background: var(--gold);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 2rem;
+            transition: all 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #ff6b6b;
+            transform: translateY(-2px);
+        }
+
+        .chess-board-wrapper {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem auto;
+            max-width: 600px;
+        }
+
+        .chess-board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0;
+            max-width: 500px;
+            margin: 0 auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(233, 69, 96, 0.4);
+            border: 3px solid #333;
+        }
+
+        .board-square {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+        }
+
+        .board-square:hover {
+            filter: brightness(1.15);
+        }
+
+        .board-square.light {
+            background-color: var(--board-light);
+        }
+
+        .board-square.dark {
+            background-color: var(--board-dark);
+        }
+
+        .board-square.selected {
+            box-shadow: inset 0 0 0 4px #00ff00;
+        }
+
+        .board-square.possible-move::after {
+            content: '';
+            position: absolute;
+            width: 25%;
+            height: 25%;
+            background: rgba(0, 255, 0, 0.5);
+            border-radius: 50%;
+        }
+
+        .board-square.capture::after {
+            content: '';
+            position: absolute;
+            width: 80%;
+            height: 80%;
+            border: 4px solid rgba(255, 0, 0, 0.5);
+            border-radius: 50%;
+        }
+
+        .piece-svg {
+            width: 80%;
+            height: 80%;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+        }
+
+        .game-info {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+        }
+
+        .lesson-title {
+            font-family: 'Cairo', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .lesson-content {
+            line-height: 1.8;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-right: 4px solid var(--gold);
+        }
+
+        .piece-lesson-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .piece-lesson-card {
+            background: rgba(233, 69, 96, 0.1);
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .piece-lesson-card:hover {
+            background: rgba(233, 69, 96, 0.3);
+            transform: scale(1.05);
+        }
+
+        .piece-lesson-card .piece-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .piece-lesson-card .piece-name {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .mode-selector, .button-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+
+        .mode-btn, .action-btn {
+            background: var(--gold);
+            border: 2px solid var(--gold);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-btn:hover, .action-btn:hover {
+            background: #ff6b6b;
+            transform: scale(1.05);
+        }
+
+        .mode-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 10px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: rgba(233, 69, 96, 0.2);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+
+        .ai-thinking {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem 0;
+            color: var(--gold);
+            font-size: 1.1rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--gold);
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .champions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .champion-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .champion-card:hover {
+            border-color: var(--gold);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.3);
+        }
+
+        .champion-name {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin: 1rem 0;
+        }
+
+        .settings-panel {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2rem;
+            border-radius: 20px;
+        }
+
+        .settings-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+        }
+
+        .settings-title {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 1rem;
+        }
+
+        .piece-style-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+
+        .piece-style-option {
+            background: rgba(233, 69, 96, 0.1);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .piece-style-option.selected {
+            border-color: var(--gold);
+            background: rgba(233, 69, 96, 0.3);
+        }
+
+        .piece-style-option:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .logo-icon {
+                font-size: 3rem;
+            }
+            .logo {
+                font-size: 1.6rem;
+            }
+            .main-menu {
+                grid-template-columns: 1fr;
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // SVG chess pieces (chess.com style)
+        const PieceSVG = ({ piece, style }) => {
+            if (!piece) return null;
+            
+            const color = piece === piece.toUpperCase() ? 'white' : 'black';
+            const type = piece.toLowerCase();
+            
+            // Simplified SVG paths for chess pieces
+            const paths = {
+                'p': color === 'white' 
+                    ? 'M 22,9 C 19.79,9 18,10.79 18,13 C 18,13.89 18.29,14.71 18.78,15.38 C 16.83,16.5 15.5,18.59 15.5,21 C 15.5,23.03 16.44,24.84 17.91,26.03 C 14.91,27.09 10.5,31.58 10.5,39.5 L 33.5,39.5 C 33.5,31.58 29.09,27.09 26.09,26.03 C 27.56,24.84 28.5,23.03 28.5,21 C 28.5,18.59 27.17,16.5 25.22,15.38 C 25.71,14.71 26,13.89 26,13 C 26,10.79 24.21,9 22,9 z'
+                    : 'M 22,9 C 19.79,9 18,10.79 18,13 C 18,13.89 18.29,14.71 18.78,15.38 C 16.83,16.5 15.5,18.59 15.5,21 C 15.5,23.03 16.44,24.84 17.91,26.03 C 14.91,27.09 10.5,31.58 10.5,39.5 L 33.5,39.5 C 33.5,31.58 29.09,27.09 26.09,26.03 C 27.56,24.84 28.5,23.03 28.5,21 C 28.5,18.59 27.17,16.5 25.22,15.38 C 25.71,14.71 26,13.89 26,13 C 26,10.79 24.21,9 22,9 z',
+                'n': 'M 22,10 C 10.5,11.41 10.5,11.41 10.5,11.41 C 10.5,11.41 9.91,15.5 11,15.5 C 11,15.5 11.5,18.5 13,18.5 C 13,18.5 13.41,20 14.5,21.5 C 14.5,21.5 15,22 16,22 C 16,22 17,21.5 17,21.5 C 17,21.5 20,24 20,24 C 20,24 22,23.5 23,23.5 C 23,23.5 25,24.5 27,24.5 C 27,24.5 30.5,22.5 31,22.5 C 31,22.5 31.5,22 31.5,21 C 31.5,21 32,20 32,19 C 32,19 33,17.5 33,15.5 C 33,15.5 33.5,14 32.5,12.5 C 32.5,12.5 32,11.5 30,10.5 L 22,10 z',
+                'b': 'M 9,36 C 12.39,35.03 19.11,36.43 22.5,34 C 25.89,36.43 32.61,35.03 36,36 C 36,36 37.65,36.54 39,38 C 38.32,38.97 37.35,38.99 36,38.5 C 32.61,37.53 25.89,38.96 22.5,37.5 C 19.11,38.96 12.39,37.53 9,38.5 C 7.65,38.99 6.68,38.97 6,38 C 7.35,36.54 9,36 9,36 z',
+                'r': 'M 9,39 L 36,39 L 36,36 L 9,36 L 9,39 z M 12,36 L 12,32 L 33,32 L 33,36 L 12,36 z M 11,14 L 11,9 L 15,9 L 15,11 L 20,11 L 20,9 L 25,9 L 25,11 L 30,11 L 30,9 L 34,9 L 34,14',
+                'q': 'M 8,12 C 8,12 8,12 8,12 C 8,12 8,12 8,12 C 8,12 8,12 8,12 C 8,12 8,12 8,12 C 8,12 8,12 8,12 C 8,12 8,12 8,12 C 8,12 8,12 8,12 C 8,12 8,12 8,12 C 8,12 8,12 8,12 z',
+                'k': 'M 22.5,11.63 L 22.5,6 L 20,6 L 20,11.63 L 11.63,11.63 L 11.63,14.13 L 20,14.13 L 20,19.63 L 22.5,19.63 L 22.5,14.13 L 30.87,14.13 L 30.87,11.63 L 22.5,11.63 z'
+            };
+
+            return (
+                <svg className="piece-svg" viewBox="0 0 45 45">
+                    <path
+                        d={paths[type]}
+                        fill={color === 'white' ? '#ffffff' : '#000000'}
+                        stroke={color === 'white' ? '#000000' : '#ffffff'}
+                        strokeWidth="1.5"
+                    />
+                </svg>
+            );
+        };
+
+        function App() {
+            const [isLoggedIn, setIsLoggedIn] = useState(false);
+            const [currentUser, setCurrentUser] = useState(null);
+            const [currentSection, setCurrentSection] = useState('menu');
+            const [showSettings, setShowSettings] = useState(false);
+            const [pieceStyle, setPieceStyle] = useState('classic');
+            
+            // Game states
+            const [game, setGame] = useState(new Chess());
+            const [selectedSquare, setSelectedSquare] = useState(null);
+            const [possibleMoves, setPossibleMoves] = useState([]);
+            const [gameStatus, setGameStatus] = useState('');
+            const [isAIThinking, setIsAIThinking] = useState(false);
+            
+            // AI/Champions
+            const [selectedChampion, setSelectedChampion] = useState(null);
+            const [aiDifficulty, setAiDifficulty] = useState(null);
+            
+            // Learning
+            const [selectedPiece, setSelectedPiece] = useState(null);
+            
+            // Check login status
+            useEffect(() => {
+                const checkLogin = async () => {
+                    try {
+                        const userData = await window.storage.get('currentUser');
+                        if (userData && userData.value) {
+                            const user = JSON.parse(userData.value);
+                            setCurrentUser(user);
+                            setIsLoggedIn(true);
+                        }
+                    } catch (e) {
+                        console.log('Not logged in');
+                    }
+                };
+                checkLogin();
+            }, []);
+
+            const handleLogin = async (username, password) => {
+                try {
+                    const storedUser = await window.storage.get(`user:${username}`);
+                    
+                    if (storedUser && storedUser.value) {
+                        const user = JSON.parse(storedUser.value);
+                        if (user.password === password) {
+                            await window.storage.set('currentUser', JSON.stringify(user));
+                            setCurrentUser(user);
+                            setIsLoggedIn(true);
+                            return true;
+                        }
+                    }
+                    return false;
+                } catch (e) {
+                    console.error('Login error:', e);
+                    return false;
+                }
+            };
+
+            const handleRegister = async (username, password, email) => {
+                try {
+                    const newUser = {
+                        username,
+                        password,
+                        email,
+                        rating: 1200,
+                        friends: [],
+                        settings: { pieceStyle: 'classic' }
+                    };
+                    
+                    await window.storage.set(`user:${username}`, JSON.stringify(newUser));
+                    await window.storage.set('currentUser', JSON.stringify(newUser));
+                    setCurrentUser(newUser);
+                    setIsLoggedIn(true);
+                    return true;
+                } catch (e) {
+                    console.error('Registration error:', e);
+                    return false;
+                }
+            };
+
+            const handleLogout = async () => {
+                await window.storage.delete('currentUser');
+                setCurrentUser(null);
+                setIsLoggedIn(false);
+                setCurrentSection('menu');
+            };
+
+            const worldChampions = [
+                { 
+                    name: 'بوبي فيشر', 
+                    era: '1972-1975', 
+                    style: 'هجومي دقيق', 
+                    rating: 2800,
+                    personality: 'aggressive and precise, likes tactical complications and direct attacks'
+                },
+                { 
+                    name: 'غاري كاسباروف', 
+                    era: '1985-2000', 
+                    style: 'ديناميكي عدواني', 
+                    rating: 2850,
+                    personality: 'very aggressive, dynamic play, loves initiative and attacking chess'
+                },
+                { 
+                    name: 'ماغنوس كارلسن', 
+                    era: '2013-2023', 
+                    style: 'استراتيجي متوازن', 
+                    rating: 2882,
+                    personality: 'balanced and strategic, excellent endgame player, positional understanding'
+                },
+                { 
+                    name: 'أناتولي كاربوف', 
+                    era: '1975-1985', 
+                    style: 'موضعي صبور', 
+                    rating: 2780,
+                    personality: 'patient positional player, excellent technique, strategic mastery'
+                },
+                {
+                    name: 'ميخائيل تال',
+                    era: '1960-1961',
+                    style: 'تكتيكي مبتكر',
+                    rating: 2705,
+                    personality: 'wild tactical genius, loves sacrifices and complications'
+                },
+                {
+                    name: 'خوسيه كابابلانكا',
+                    era: '1921-1927',
+                    style: 'كلاسيكي نقي',
+                    rating: 2720,
+                    personality: 'classical and pure, simple and clear play, endgame mastery'
+                }
+            ];
+
+            const pieceLessons = [
+                { name: 'البيدق', piece: 'p', icon: '♟', description: 'يتحرك خطوة واحدة للأمام، يأكل قطرياً' },
+                { name: 'الحصان', piece: 'n', icon: '♞', description: 'يتحرك على شكل حرف L، يقفز فوق القطع' },
+                { name: 'الفيل', piece: 'b', icon: '♝', description: 'يتحرك قطرياً لأي مسافة' },
+                { name: 'القلعة', piece: 'r', icon: '♜', description: 'يتحرك أفقياً أو عمودياً لأي مسافة' },
+                { name: 'الوزير', piece: 'q', icon: '♛', description: 'يتحرك في أي اتجاه لأي مسافة' },
+                { name: 'الملك', piece: 'k', icon: '♚', description: 'يتحرك خطوة واحدة في أي اتجاه' }
+            ];
+
+            const makeAIMoveWithAPI = async (championPersonality) => {
+                setIsAIThinking(true);
+                
+                try {
+                    const moves = game.moves({ verbose: true });
+                    const fen = game.fen();
+                    const history = game.history();
+                    
+                    const prompt = `You are playing chess as ${selectedChampion?.name || 'a strong chess player'}.
+Playing style: ${championPersonality || 'balanced and strategic'}
+
+Current board position (FEN): ${fen}
+Move history: ${history.join(', ')}
+
+Available legal moves: ${moves.map(m => m.san).join(', ')}
+
+Based on this player's style, choose the BEST move from the available legal moves. 
+Respond with ONLY the move in standard algebraic notation (like "Nf3" or "e4"), nothing else.`;
+
+                    const response = await fetch("https://api.anthropic.com/v1/messages", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            model: "claude-sonnet-4-20250514",
+                            max_tokens: 100,
+                            messages: [
+                                { role: "user", content: prompt }
+                            ],
+                        })
+                    });
+
+                    const data = await response.json();
+                    const aiMove = data.content[0].text.trim();
+                    
+                    // Try to make the AI's suggested move
+                    try {
+                        const move = game.move(aiMove);
+                        if (move) {
+                            setGame(new Chess(game.fen()));
+                            checkGameStatus();
+                        }
+                    } catch (e) {
+                        // Fallback: make a random legal move
+                        const randomMove = moves[Math.floor(Math.random() * moves.length)];
+                        game.move(randomMove.san);
+                        setGame(new Chess(game.fen()));
+                        checkGameStatus();
+                    }
+                } catch (error) {
+                    console.error('AI move error:', error);
+                    // Fallback to random move
+                    const moves = game.moves({ verbose: true });
+                    if (moves.length > 0) {
+                        const randomMove = moves[Math.floor(Math.random() * moves.length)];
+                        game.move(randomMove.san);
+                        setGame(new Chess(game.fen()));
+                        checkGameStatus();
+                    }
+                }
+                
+                setIsAIThinking(false);
+            };
+
+            const handleSquareClick = (square) => {
+                if (isAIThinking) return;
+
+                const piece = game.get(square);
+                
+                if (selectedSquare) {
+                    if (selectedSquare === square) {
+                        setSelectedSquare(null);
+                        setPossibleMoves([]);
+                        return;
+                    }
+                    
+                    // Try to make move
+                    const moves = game.moves({ verbose: true, square: selectedSquare });
+                    const targetMove = moves.find(m => m.to === square);
+                    
+                    if (targetMove) {
+                        game.move(targetMove.san);
+                        setGame(new Chess(game.fen()));
+                        setSelectedSquare(null);
+                        setPossibleMoves([]);
+                        checkGameStatus();
+                        
+                        // AI response for champion mode
+                        if (selectedChampion && !game.game_over()) {
+                            setTimeout(() => {
+                                makeAIMoveWithAPI(selectedChampion.personality);
+                            }, 500);
+                        }
+                    } else if (piece && piece.color === game.turn()) {
+                        setSelectedSquare(square);
+                        const newMoves = game.moves({ verbose: true, square });
+                        setPossibleMoves(newMoves.map(m => m.to));
+                    } else {
+                        setSelectedSquare(null);
+                        setPossibleMoves([]);
+                    }
+                } else if (piece && piece.color === game.turn()) {
+                    setSelectedSquare(square);
+                    const newMoves = game.moves({ verbose: true, square });
+                    setPossibleMoves(newMoves.map(m => m.to));
+                }
+            };
+
+            const checkGameStatus = () => {
+                if (game.in_checkmate()) {
+                    setGameStatus('كش مات! انتهت اللعبة');
+                } else if (game.in_check()) {
+                    setGameStatus('كش!');
+                } else if (game.in_draw()) {
+                    setGameStatus('تعادل!');
+                } else if (game.in_stalemate()) {
+                    setGameStatus('تعادل بالوضع الجامد!');
+                } else {
+                    setGameStatus('');
+                }
+            };
+
+            const resetGame = () => {
+                setGame(new Chess());
+                setSelectedSquare(null);
+                setPossibleMoves([]);
+                setGameStatus('');
+            };
+
+            if (!isLoggedIn) {
+                return <LoginScreen onLogin={handleLogin} onRegister={handleRegister} />;
+            }
+
+            return (
+                <>
+                    <Header 
+                        user={currentUser} 
+                        onLogout={handleLogout}
+                        onSettings={() => setShowSettings(true)}
+                        onHome={() => setCurrentSection('menu')}
+                    />
+                    
+                    {showSettings ? (
+                        <SettingsPanel 
+                            user={currentUser}
+                            onClose={() => setShowSettings(false)}
+                            pieceStyle={pieceStyle}
+                            setPieceStyle={setPieceStyle}
+                        />
+                    ) : currentSection === 'menu' ? (
+                        <MainMenu onSelectSection={setCurrentSection} />
+                    ) : currentSection === 'learn' ? (
+                        <LearnSection 
+                            pieceLessons={pieceLessons}
+                            selectedPiece={selectedPiece}
+                            setSelectedPiece={setSelectedPiece}
+                            game={game}
+                            onSquareClick={handleSquareClick}
+                            selectedSquare={selectedSquare}
+                            possibleMoves={possibleMoves}
+                            resetGame={resetGame}
+                            onBack={() => setCurrentSection('menu')}
+                        />
+                    ) : currentSection === 'champions' ? (
+                        <ChampionsSection
+                            champions={worldChampions}
+                            selectedChampion={selectedChampion}
+                            setSelectedChampion={setSelectedChampion}
+                            game={game}
+                            onSquareClick={handleSquareClick}
+                            selectedSquare={selectedSquare}
+                            possibleMoves={possibleMoves}
+                            gameStatus={gameStatus}
+                            isAIThinking={isAIThinking}
+                            resetGame={resetGame}
+                            onBack={() => setCurrentSection('menu')}
+                        />
+                    ) : null}
+                </>
+            );
+        }
+
+        function LoginScreen({ onLogin, onRegister }) {
+            const [isLogin, setIsLogin] = useState(true);
+            const [username, setUsername] = useState('');
+            const [password, setPassword] = useState('');
+            const [email, setEmail] = useState('');
+            const [error, setError] = useState('');
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setError('');
+
+                if (isLogin) {
+                    const success = await onLogin(username, password);
+                    if (!success) {
+                        setError('اسم المستخدم أو كلمة المرور غير صحيحة');
+                    }
+                } else {
+                    if (username && password && email) {
+                        const success = await onRegister(username, password, email);
+                        if (!success) {
+                            setError('حدث خطأ في التسجيل');
+                        }
+                    } else {
+                        setError('يرجى ملء جميع الحقول');
+                    }
+                }
+            };
+
+            return (
+                <div className="login-container">
+                    <h1 className="login-title">♔ Chess Master ♔</h1>
+                    <form onSubmit={handleSubmit}>
+                        <div className="input-group">
+                            <label className="input-label">اسم المستخدم</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
+                                required
+                            />
+                        </div>
+                        
+                        {!isLogin && (
+                            <div className="input-group">
+                                <label className="input-label">البريد الإلكتروني</label>
+                                <input
+                                    type="email"
+                                    className="input-field"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        )}
+                        
+                        <div className="input-group">
+                            <label className="input-label">كلمة المرور</label>
+                            <input
+                                type="password"
+                                className="input-field"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        {error && <div style={{color: 'red', marginBottom: '1rem', textAlign: 'center'}}>{error}</div>}
+
+                        <button type="submit" className="login-btn">
+                            {isLogin ? 'تسجيل الدخول' : 'إنشاء حساب'}
+                        </button>
+                    </form>
+
+                    <div className="toggle-auth">
+                        {isLogin ? (
+                            <>
+                                ليس لديك حساب؟{' '}
+                                <a onClick={() => setIsLogin(false)}>سجل الآن</a>
+                            </>
+                        ) : (
+                            <>
+                                لديك حساب؟{' '}
+                                <a onClick={() => setIsLogin(true)}>سجل الدخول</a>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function Header({ user, onLogout, onSettings, onHome }) {
+            return (
+                <div className="header">
+                    <div className="logo-container" onClick={onHome}>
+                        <div className="logo-icon">♔</div>
+                        <div className="logo-text">
+                            <h1 className="logo">Chess Master</h1>
+                            <p className="subtitle">أكاديمية الشطرنج الشاملة</p>
+                        </div>
+                    </div>
+                    
+                    <div className="user-info">
+                        <div className="user-avatar">{user?.username?.charAt(0).toUpperCase()}</div>
+                        <div>
+                            <div className="user-name">{user?.username}</div>
+                            <div style={{fontSize: '0.9rem', color: '#ccc'}}>التصنيف: {user?.rating}</div>
+                        </div>
+                        <button className="settings-btn" onClick={onSettings}>⚙️ الإعدادات</button>
+                        <button className="logout-btn" onClick={onLogout}>تسجيل الخروج</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function MainMenu({ onSelectSection }) {
+            return (
+                <div className="main-menu">
+                    <div className="menu-card" onClick={() => onSelectSection('online')}>
+                        <span className="card-icon">⚔️</span>
+                        <h2 className="card-title">اللعب أونلاين</h2>
+                        <p className="card-desc">تحدى لاعبين حقيقيين من جميع أنحاء العالم في مباريات مباشرة</p>
+                    </div>
+
+                    <div className="menu-card" onClick={() => onSelectSection('ai')}>
+                        <span className="card-icon">🤖</span>
+                        <h2 className="card-title">اللعب مع الذكاء الصناعي</h2>
+                        <p className="card-desc">أربع مستويات من التحدي مع تحليل شامل</p>
+                    </div>
+
+                    <div className="menu-card" onClick={() => onSelectSection('champions')}>
+                        <span className="card-icon">👑</span>
+                        <h2 className="card-title">اللعب مع أبطال العالم</h2>
+                        <p className="card-desc">واجه أساطير الشطرنج عبر AI يحاكي أسلوب كل بطل</p>
+                    </div>
+
+                    <div className="menu-card" onClick={() => onSelectSection('learn')}>
+                        <span className="card-icon">📚</span>
+                        <h2 className="card-title">تعلم الشطرنج</h2>
+                        <p className="card-desc">تعلم حركة كل قطعة على حدة مع تطبيق عملي</p>
+                    </div>
+
+                    <div className="menu-card" onClick={() => onSelectSection('openings')}>
+                        <span className="card-icon">🎯</span>
+                        <h2 className="card-title">الافتتاحيات والدفاعات</h2>
+                        <p className="card-desc">تعلم جميع الافتتاحيات والدفاعات الشهيرة</p>
+                    </div>
+
+                    <div className="menu-card" onClick={() => onSelectSection('books')}>
+                        <span className="card-icon">📖</span>
+                        <h2 className="card-title">مكتبة الكتب</h2>
+                        <p className="card-desc">مجموعة شاملة من أفضل كتب الشطرنج</p>
+                    </div>
+                </div>
+            );
+        }
+
+        function ChessBoard({ game, onSquareClick, selectedSquare, possibleMoves }) {
+            const board = game.board();
+            
+            return (
+                <div className="chess-board">
+                    {board.map((row, i) =>
+                        row.map((square, j) => {
+                            const file = String.fromCharCode(97 + j);
+                            const rank = 8 - i;
+                            const squareName = file + rank;
+                            const isLight = (i + j) % 2 === 0;
+                            const isSelected = selectedSquare === squareName;
+                            const isPossibleMove = possibleMoves.includes(squareName);
+                            const isCapture = isPossibleMove && square !== null;
+                            
+                            return (
+                                <div
+                                    key={squareName}
+                                    className={`board-square ${isLight ? 'light' : 'dark'} 
+                                        ${isSelected ? 'selected' : ''} 
+                                        ${isPossibleMove && !isCapture ? 'possible-move' : ''}
+                                        ${isCapture ? 'capture' : ''}`}
+                                    onClick={() => onSquareClick(squareName)}
+                                >
+                                    {square && <PieceSVG piece={square.type === 'p' && square.color === 'w' ? 'P' : square.type === 'p' ? 'p' : square.color === 'w' ? square.type.toUpperCase() : square.type} />}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+            );
+        }
+
+        function LearnSection({ pieceLessons, selectedPiece, setSelectedPiece, game, onSquareClick, selectedSquare, possibleMoves, resetGame, onBack }) {
+            return (
+                <div className="game-container">
+                    <button className="back-btn" onClick={onBack}>← العودة للقائمة</button>
+                    
+                    <div className="game-info">
+                        <h2 className="lesson-title">تعلم حركة القطع</h2>
+                        
+                        {!selectedPiece ? (
+                            <>
+                                <p style={{textAlign: 'center', marginBottom: '2rem', fontSize: '1.2rem'}}>
+                                    اختر قطعة لتعلم كيفية تحريكها
+                                </p>
+                                <div className="piece-lesson-grid">
+                                    {pieceLessons.map((lesson) => (
+                                        <div
+                                            key={lesson.piece}
+                                            className="piece-lesson-card"
+                                            onClick={() => setSelectedPiece(lesson)}
+                                        >
+                                            <div className="piece-icon">{lesson.icon}</div>
+                                            <div className="piece-name">{lesson.name}</div>
+                                            <p style={{marginTop: '0.5rem', fontSize: '0.9rem', color: '#ccc'}}>
+                                                {lesson.description}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <h3 style={{textAlign: 'center', fontSize: '1.8rem', color: 'var(--gold)', marginBottom: '1rem'}}>
+                                    {selectedPiece.icon} {selectedPiece.name}
+                                </h3>
+                                <div className="lesson-content">
+                                    <strong>كيفية الحركة:</strong> {selectedPiece.description}
+                                </div>
+                                
+                                <div className="chess-board-wrapper">
+                                    <ChessBoard
+                                        game={game}
+                                        onSquareClick={onSquareClick}
+                                        selectedSquare={selectedSquare}
+                                        possibleMoves={possibleMoves}
+                                    />
+                                    
+                                    <div className="button-group">
+                                        <button className="action-btn" onClick={resetGame}>إعادة تعيين الرقعة</button>
+                                        <button className="action-btn" onClick={() => setSelectedPiece(null)}>العودة للقطع</button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function ChampionsSection({ champions, selectedChampion, setSelectedChampion, game, onSquareClick, selectedSquare, possibleMoves, gameStatus, isAIThinking, resetGame, onBack }) {
+            return (
+                <div className="game-container">
+                    <button className="back-btn" onClick={() => {
+                        onBack();
+                        setSelectedChampion(null);
+                    }}>← العودة للقائمة</button>
+                    
+                    <div className="game-info">
+                        <h2 className="lesson-title">اللعب مع أبطال العالم</h2>
+                        
+                        {!selectedChampion ? (
+                            <>
+                                <p style={{textAlign: 'center', marginBottom: '2rem', fontSize: '1.1rem'}}>
+                                    اختبر مهاراتك ضد أساطير الشطرنج. كل بطل يلعب بأسلوبه الفريد!
+                                </p>
+                                <div className="champions-grid">
+                                    {champions.map((champion, i) => (
+                                        <div
+                                            key={i}
+                                            className="champion-card"
+                                            onClick={() => {
+                                                setSelectedChampion(champion);
+                                                resetGame();
+                                            }}
+                                        >
+                                            <div style={{fontSize: '3rem'}}>👑</div>
+                                            <h3 className="champion-name">{champion.name}</h3>
+                                            <p style={{color: '#ccc', marginBottom: '0.5rem'}}>{champion.era}</p>
+                                            <p style={{color: '#999', fontSize: '0.9rem', marginBottom: '0.5rem'}}>{champion.style}</p>
+                                            <p style={{color: 'var(--gold)', fontWeight: 'bold'}}>تصنيف: {champion.rating}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <h3 style={{textAlign: 'center', fontSize: '1.8rem', color: 'var(--gold)', marginBottom: '0.5rem'}}>
+                                    تلعب ضد: {selectedChampion.name}
+                                </h3>
+                                <p style={{textAlign: 'center', color: '#ccc', marginBottom: '2rem'}}>
+                                    الأسلوب: {selectedChampion.style}
+                                </p>
+                                
+                                {isAIThinking && (
+                                    <div className="ai-thinking">
+                                        <span className="loading-spinner"></span>
+                                        {selectedChampion.name} يفكر...
+                                    </div>
+                                )}
+                                
+                                <div className="chess-board-wrapper">
+                                    <ChessBoard
+                                        game={game}
+                                        onSquareClick={onSquareClick}
+                                        selectedSquare={selectedSquare}
+                                        possibleMoves={possibleMoves}
+                                    />
+                                    
+                                    {gameStatus && (
+                                        <div className="status-message">{gameStatus}</div>
+                                    )}
+                                    
+                                    <div className="button-group">
+                                        <button className="action-btn" onClick={resetGame}>لعبة جديدة</button>
+                                        <button className="action-btn" onClick={() => setSelectedChampion(null)}>تغيير البطل</button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function SettingsPanel({ user, onClose, pieceStyle, setPieceStyle }) {
+            return (
+                <div className="game-container">
+                    <button className="back-btn" onClick={onClose}>← العودة</button>
+                    
+                    <div className="settings-panel">
+                        <h2 className="lesson-title">الإعدادات</h2>
+                        
+                        <div className="settings-section">
+                            <h3 className="settings-title">شكل القطع</h3>
+                            <div className="piece-style-options">
+                                <div 
+                                    className={`piece-style-option ${pieceStyle === 'classic' ? 'selected' : ''}`}
+                                    onClick={() => setPieceStyle('classic')}
+                                >
+                                    <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>♔</div>
+                                    <div>كلاسيكي</div>
+                                </div>
+                                <div 
+                                    className={`piece-style-option ${pieceStyle === 'modern' ? 'selected' : ''}`}
+                                    onClick={() => setPieceStyle('modern')}
+                                >
+                                    <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>♔</div>
+                                    <div>عصري</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="settings-section">
+                            <h3 className="settings-title">معلومات الحساب</h3>
+                            <p><strong>اسم المستخدم:</strong> {user?.username}</p>
+                            <p><strong>البريد الإلكتروني:</strong> {user?.email}</p>
+                            <p><strong>التصنيف:</strong> {user?.rating}</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
